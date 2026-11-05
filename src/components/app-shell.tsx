@@ -17,6 +17,7 @@ import clsx from "clsx";
 
 import { logoutAction } from "@/actions/auth";
 import { Logo } from "@/components/logo";
+import { OfflineManager } from "@/components/offline/offline-manager";
 import { buttonClasses } from "@/components/ui/button";
 import { initials } from "@/lib/format";
 
@@ -138,6 +139,7 @@ export function AppShell({
         </header>
 
         <main className="print-reset mx-auto w-full max-w-[1200px] px-4 pb-28 pt-5 sm:px-6 lg:px-10 lg:pb-14 lg:pt-10">
+          <OfflineManager />
           {children}
         </main>
       </div>

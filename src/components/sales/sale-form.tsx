@@ -1,13 +1,14 @@
 "use client";
 
 import {
-  useActionState,
   useEffect,
   useMemo,
   useState,
+  type FormEvent,
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -27,7 +28,6 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
-import { createSaleAction } from "@/actions/sales";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
@@ -40,7 +40,8 @@ import {
 } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatNumber, formatPercent, formatRupiah } from "@/lib/format";
-import { EMPTY_ACTION_STATE } from "@/lib/types";
+import { getDb } from "@/lib/offline/db";
+import { enqueueSale, syncPending } from "@/lib/offline/sync";
 
 export type SaleProduct = {
   id: string;
@@ -152,10 +153,10 @@ export function SaleForm({
   products: SaleProduct[];
   today: string;
 }) {
-  const [state, formAction, pending] = useActionState(
-    createSaleAction,
-    EMPTY_ACTION_STATE,
-  );
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const [items, setItems] = useState<CartLine[]>([]);
   const [search, setSearch] = useState("");
@@ -296,6 +297,71 @@ export function SaleForm({
     unitPrice: item.unitPrice,
   }));
 
+  function resetForm() {
+    setItems([]);
+    setCustomerName("");
+    setPaymentMethod("cash");
+    setDiscountText("");
+    setNote("");
+    setPaymentOpen(false);
+  }
+
+  /**
+   * Offline-first: transaksi disimpan dulu di perangkat, lalu langsung dicoba
+   * dikirim. Kalau sinyal bermasalah, data tetap aman di antrean dan dikirim
+   * otomatis nanti.
+   */
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending || items.length === 0) return;
+
+    setError(null);
+    setNotice(null);
+    setPending(true);
+
+    try {
+      const record = await enqueueSale(
+        {
+          soldOn,
+          customerName: customerName.trim(),
+          paymentMethod,
+          discount,
+          note: note.trim(),
+          items: payloadItems,
+        },
+        products,
+      );
+
+      const outcome = await syncPending();
+      const saved = outcome.saved[record.clientId];
+      if (saved) {
+        router.push(`/penjualan/${saved.saleId}?baru=1`);
+        return;
+      }
+
+      // Belum terkirim: apakah ditolak server atau hanya belum ada sinyal?
+      const current = await getDb().pending.get(record.clientId);
+      if (current?.status === "error") {
+        setError(
+          current.error ??
+            "Penjualan ditolak server. Periksa daftar antrean untuk detailnya.",
+        );
+        return;
+      }
+
+      setNotice(
+        `Tersimpan di perangkat (${formatRupiah(record.summary.total)}). Akan dikirim otomatis saat sinyal tersedia.`,
+      );
+      resetForm();
+    } catch {
+      setError(
+        "Gagal menyimpan di perangkat. Pastikan penyimpanan browser tidak penuh, lalu coba lagi.",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
   if (products.length === 0) {
     return (
       <EmptyState
@@ -317,16 +383,9 @@ export function SaleForm({
 
   return (
     <form
-      action={formAction}
+      onSubmit={handleSubmit}
       className="grid items-start gap-5 pb-20 lg:grid-cols-[1.35fr_1fr] lg:pb-0"
     >
-      <input type="hidden" name="items" value={JSON.stringify(payloadItems)} />
-      <input type="hidden" name="paymentMethod" value={paymentMethod} />
-      <input type="hidden" name="soldOn" value={soldOn} />
-      <input type="hidden" name="discount" value={discount} />
-      <input type="hidden" name="customerName" value={customerName} />
-      <input type="hidden" name="note" value={note} />
-
       <div className="space-y-4">
         <Card className="overflow-hidden">
           <StepHeader
@@ -560,7 +619,8 @@ export function SaleForm({
       </div>
 
       <div className="space-y-4 lg:sticky lg:top-6">
-        {state.error ? <Alert tone="error">{state.error}</Alert> : null}
+        {error ? <Alert tone="error">{error}</Alert> : null}
+        {notice ? <Alert tone="success">{notice}</Alert> : null}
 
         <div
           id="keranjang"

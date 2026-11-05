@@ -13,8 +13,10 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@serwist/next": "^9.5.13",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "dexie": "^4.4.7",
     "drizzle-orm": "^0.44.5",
     "jose": "^6.1.0",
     "lucide-react": "^0.468.0",
@@ -22,6 +24,7 @@
     "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "serwist": "^9.5.13",
     "zod": "^4.1.12"
   },
   "devDependencies": {

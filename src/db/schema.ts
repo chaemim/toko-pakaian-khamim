@@ -81,6 +81,9 @@ export const sales = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     invoiceNo: text("invoice_no").notNull(),
+    // ID unik yang dibuat di perangkat saat mencatat penjualan (mode offline).
+    // Dipakai agar sinkronisasi ulang tidak membuat transaksi dobel.
+    clientId: uuid("client_id"),
     soldOn: date("sold_on").notNull(),
     customerName: text("customer_name"),
     paymentMethod: text("payment_method").notNull().default("cash"),
@@ -99,6 +102,7 @@ export const sales = pgTable(
   },
   (table) => [
     uniqueIndex("sales_invoice_unique").on(table.invoiceNo),
+    uniqueIndex("sales_client_id_unique").on(table.clientId),
     index("sales_sold_on_idx").on(table.soldOn),
     index("sales_created_at_idx").on(table.createdAt),
   ],

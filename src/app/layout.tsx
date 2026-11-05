@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description:
     "Catat penjualan toko pakaian dengan harga per ukuran, pantau laba, dan kelola laporan harian dengan mudah.",
   applicationName: "Lapak",
+  appleWebApp: {
+    capable: true,
+    title: "Lapak",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
