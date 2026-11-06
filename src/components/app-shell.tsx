@@ -162,11 +162,26 @@ export function AppShell({
               href="/penjualan/baru"
               className="group -mt-5 flex flex-col items-center gap-1"
               aria-label="Catat penjualan baru"
+              aria-current={isActive(pathname, "/penjualan") ? "page" : undefined}
             >
-              <span className="grid h-[52px] w-[52px] place-items-center rounded-full bg-brand-700 text-paper shadow-[0_14px_30px_-12px_rgba(18,55,39,0.9)] ring-4 ring-cream transition group-active:scale-95">
+              <span
+                className={clsx(
+                  "grid h-[52px] w-[52px] place-items-center rounded-full text-paper shadow-[0_14px_30px_-12px_rgba(18,55,39,0.9)] ring-4 transition group-active:scale-95",
+                  isActive(pathname, "/penjualan")
+                    ? "bg-brand-900 ring-gold-300"
+                    : "bg-brand-700 ring-cream",
+                )}
+              >
                 <Plus className="h-6 w-6" />
               </span>
-              <span className="text-[10px] font-bold text-brand-800">Jual</span>
+              <span
+                className={clsx(
+                  "text-[11px] leading-none text-brand-800",
+                  isActive(pathname, "/penjualan") ? "font-extrabold" : "font-bold",
+                )}
+              >
+                Jual
+              </span>
             </Link>
           </div>
 
@@ -195,13 +210,34 @@ function MobileNavItem({
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={clsx(
-        "flex h-full flex-col items-center justify-center gap-1 text-[10px] font-semibold transition",
-        active ? "text-brand-700" : "text-muted",
-      )}
+      className="group relative flex h-full flex-col items-center justify-center gap-0.5"
     >
-      <Icon className={clsx("h-5 w-5", active && "stroke-[2.4]")} />
-      {item.label}
+      {/* Garis penanda di tepi atas menu yang aktif */}
+      <span
+        aria-hidden
+        className={clsx(
+          "absolute top-0 h-[3px] rounded-b-full bg-brand-700 transition-all",
+          active ? "w-9 opacity-100" : "w-0 opacity-0",
+        )}
+      />
+      <span
+        className={clsx(
+          "grid h-8 w-14 place-items-center rounded-full transition-colors",
+          active
+            ? "bg-brand-700 text-paper shadow-[0_6px_14px_-6px_rgba(18,55,39,0.8)]"
+            : "text-muted group-active:bg-brand-50",
+        )}
+      >
+        <Icon className={clsx("h-5 w-5", active && "stroke-[2.4]")} />
+      </span>
+      <span
+        className={clsx(
+          "text-[11px] leading-none transition-colors",
+          active ? "font-extrabold text-brand-800" : "font-semibold text-muted",
+        )}
+      >
+        {item.label}
+      </span>
     </Link>
   );
 }

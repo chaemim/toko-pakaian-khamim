@@ -9,8 +9,8 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
-  const store = await getStoreSettings();
+  // Jalankan bersamaan: dua query terpisah tidak perlu saling menunggu.
+  const [user, store] = await Promise.all([requireUser(), getStoreSettings()]);
 
   return (
     <AppShell
