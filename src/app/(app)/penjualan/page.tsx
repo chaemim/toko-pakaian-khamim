@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Search,
   Shirt,
@@ -13,6 +15,7 @@ import { requireUser } from "@/lib/auth";
 import { getSoldItems } from "@/lib/queries";
 import {
   addDays,
+  formatDate,
   isValidDateString,
   jakartaToday,
   rangeLabel,
@@ -66,9 +69,21 @@ export default async function SoldItemsPage({
 
   const presets = [
     { label: "Hari ini", from: today, to: today },
-    { label: "7 hari", from: addDays(today, -6), to: today },
     { label: "Bulan ini", from: startOfMonth(today), to: today },
   ];
+
+  // Navigasi per hari: < > bergeser satu hari dari tanggal akhir periode.
+  const singleDay = from === to;
+  const prevDay = addDays(to, -1);
+  const nextDay = addDays(to, 1);
+  const canGoNext = to < today;
+
+  let dayCaption = "Periode";
+  if (singleDay) {
+    if (to === today) dayCaption = "Hari ini";
+    else if (to === addDays(today, -1)) dayCaption = "Kemarin";
+    else dayCaption = formatDate(to, { weekday: "long", day: undefined, month: undefined, year: undefined });
+  }
 
   function presetHref(presetFrom: string, presetTo: string) {
     const query = new URLSearchParams({ from: presetFrom, to: presetTo });
@@ -159,31 +174,64 @@ export default async function SoldItemsPage({
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-1.5 px-4 py-3">
-          <span className="mr-1 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
-            <CalendarDays className="h-3.5 w-3.5" />
-            Periode
-          </span>
-          {presets.map((preset) => {
-            const active = preset.from === from && preset.to === to;
-            return (
+        <div className="space-y-3 px-4 py-3.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full items-center justify-between rounded-xl border border-line bg-paper p-1 shadow-card sm:w-72">
               <Link
-                key={preset.label}
-                href={presetHref(preset.from, preset.to)}
-                className={clsx(
-                  "rounded-full px-2.5 py-1 text-[10px] font-semibold transition",
-                  active
-                    ? "bg-brand-700 text-paper"
-                    : "bg-cream text-muted hover:bg-brand-50 hover:text-brand-700",
-                )}
+                href={presetHref(prevDay, prevDay)}
+                aria-label="Hari sebelumnya"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-brand-700 transition hover:bg-brand-50 active:scale-95"
               >
-                {preset.label}
+                <ChevronLeft className="h-5 w-5" />
               </Link>
-            );
-          })}
-          <span className="ml-auto text-[10px] font-medium text-muted">
-            {rangeLabel(from, to)} · {soldItems.length} jenis
-          </span>
+              <div className="min-w-0 px-2 text-center leading-tight">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
+                  {dayCaption}
+                </p>
+                <p className="mt-0.5 truncate text-xs font-bold text-ink">
+                  {rangeLabel(from, to)}
+                </p>
+              </div>
+              {canGoNext ? (
+                <Link
+                  href={presetHref(nextDay, nextDay)}
+                  aria-label="Hari berikutnya"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-brand-700 transition hover:bg-brand-50 active:scale-95"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted opacity-30"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </span>
+              )}
+            </div>
+
+            {presets.map((preset) => {
+              const active = preset.from === from && preset.to === to;
+              return (
+                <Link
+                  key={preset.label}
+                  href={presetHref(preset.from, preset.to)}
+                  className={clsx(
+                    "rounded-full px-3 py-2 text-[11px] font-semibold transition",
+                    active
+                      ? "bg-brand-700 text-paper"
+                      : "bg-cream text-muted hover:bg-brand-50 hover:text-brand-700",
+                  )}
+                >
+                  {preset.label}
+                </Link>
+              );
+            })}
+          </div>
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {singleDay ? "Per hari" : "Rentang tanggal"} · {soldItems.length} jenis barang
+          </p>
         </div>
 
         <div className="grid grid-cols-3 divide-x divide-line border-y border-line bg-cream/40">

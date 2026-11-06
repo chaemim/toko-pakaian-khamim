@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Archive,
   ArchiveRestore,
+  ChevronRight,
   Pencil,
   Plus,
   Search,
@@ -29,10 +30,12 @@ export type ProductListItem = {
   sizes: {
     id: string;
     label: string;
+    /** Harga beli (modal). Harga jual hanya dikelola di halaman produk. */
     costPrice: number;
-    sellingPrice: number;
   }[];
 };
+
+const VISIBLE_SIZES = 8;
 
 export function ProductsBrowser({
   products,
@@ -92,21 +95,37 @@ export function ProductsBrowser({
       </div>
 
       <div className="hide-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        {["Semua", ...categories].map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setCategory(item)}
-            className={clsx(
-              "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
-              category === item
-                ? "bg-brand-700 text-paper shadow-sm"
-                : "border border-line bg-paper text-muted hover:border-brand-200 hover:text-brand-700",
-            )}
-          >
-            {item}
-          </button>
-        ))}
+        {["Semua", ...categories].map((item) => {
+          const count =
+            item === "Semua"
+              ? products.length
+              : products.filter((product) => product.category === item).length;
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setCategory(item)}
+              className={clsx(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+                category === item
+                  ? "bg-brand-700 text-paper shadow-sm"
+                  : "border border-line bg-paper text-muted hover:border-brand-200 hover:text-brand-700",
+              )}
+            >
+              {item}
+              <span
+                className={clsx(
+                  "rounded-full px-1.5 py-px text-[10px] font-bold tabular-nums",
+                  category === item
+                    ? "bg-paper/20 text-paper"
+                    : "bg-cream text-muted",
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {products.length === 0 ? (
@@ -154,32 +173,39 @@ export function ProductsBrowser({
 }
 
 function ProductCard({ product }: { product: ProductListItem }) {
-  const prices = product.sizes.map((size) => size.sellingPrice);
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const costs = product.sizes.map((size) => size.costPrice);
+  const minCost = costs.length > 0 ? Math.min(...costs) : 0;
+  const maxCost = costs.length > 0 ? Math.max(...costs) : 0;
+  const shownSizes = product.sizes.slice(0, VISIBLE_SIZES);
+  const hiddenSizes = product.sizes.length - shownSizes.length;
 
   return (
     <div
       className={clsx(
-        "group flex flex-col rounded-2xl border bg-paper p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-lift sm:p-5",
+        "group flex flex-col overflow-hidden rounded-2xl border bg-paper shadow-card transition hover:-translate-y-0.5 hover:shadow-lift",
         product.isActive ? "border-line" : "border-dashed border-line opacity-75",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex items-start gap-3 p-4 pb-3 sm:p-5 sm:pb-3">
+        <span
+          aria-hidden
+          className={clsx(
+            "grid h-11 w-11 shrink-0 place-items-center rounded-xl font-display text-lg font-semibold",
+            product.isActive
+              ? "bg-brand-700 text-paper"
+              : "bg-cream text-muted",
+          )}
+        >
+          {product.name.trim().charAt(0).toUpperCase() || "?"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="line-clamp-2 font-display text-[17px] font-semibold leading-snug text-ink">
+            {product.name}
+          </h3>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Badge tone="brand">{product.category || "Tanpa kategori"}</Badge>
             {!product.isActive ? <Badge tone="muted">Nonaktif</Badge> : null}
           </div>
-          <h3 className="mt-2 truncate font-display text-lg font-semibold leading-tight text-ink">
-            {product.name}
-          </h3>
-          <p className="mt-0.5 text-[11px] font-medium text-muted">
-            {product.sizes.length} ukuran ·{" "}
-            {minPrice === maxPrice
-              ? formatRupiah(minPrice)
-              : `${formatRupiah(minPrice)} – ${formatRupiah(maxPrice)}`}
-          </p>
         </div>
         <Link
           href={`/produk/${product.id}`}
@@ -190,33 +216,65 @@ function ProductCard({ product }: { product: ProductListItem }) {
         </Link>
       </div>
 
-      <div className="mt-3.5 grid max-h-[148px] grid-cols-2 gap-1.5 overflow-y-auto pr-0.5">
-        {product.sizes.map((size) => (
-          <div
-            key={size.id}
-            className="flex items-center justify-between gap-1 rounded-lg bg-cream/60 px-2 py-1.5"
-          >
-            <span className="truncate text-[11px] font-bold text-ink">
-              {size.label}
-            </span>
-            <span className="shrink-0 text-[10px] font-medium tabular-nums text-muted">
-              {formatRupiah(size.sellingPrice)}
-            </span>
-          </div>
-        ))}
-        {product.sizes.length === 0 ? (
-          <p className="col-span-2 text-xs text-rust-500">
-            Belum ada ukuran. Klik ikon pensil untuk melengkapi.
+      <div className="mx-4 flex items-center justify-between gap-3 rounded-xl bg-gold-50 px-3.5 py-2.5 sm:mx-5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-gold-700">
+            Harga beli
           </p>
-        ) : null}
+          <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-ink">
+            {product.sizes.length === 0
+              ? "–"
+              : minCost === maxCost
+                ? formatRupiah(minCost)
+                : `${formatRupiah(minCost)} – ${formatRupiah(maxCost)}`}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-paper px-2.5 py-1 text-[10px] font-bold text-muted">
+          {product.sizes.length} ukuran
+        </span>
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-line/70 pt-3">
+      <div className="px-4 pt-3 sm:px-5">
+        {product.sizes.length === 0 ? (
+          <p className="rounded-lg bg-rust-50 px-3 py-2 text-xs text-rust-600">
+            Belum ada ukuran. Klik ikon pensil untuk melengkapi.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-1.5">
+            {shownSizes.map((size) => (
+              <li
+                key={size.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-line/80 bg-cream/40 px-2.5 py-2"
+              >
+                <span className="truncate text-[12px] font-bold text-ink">
+                  {size.label}
+                </span>
+                <span className="shrink-0 text-[11px] font-semibold tabular-nums text-muted">
+                  {formatRupiah(size.costPrice)}
+                </span>
+              </li>
+            ))}
+            {hiddenSizes > 0 ? (
+              <li className="col-span-2">
+                <Link
+                  href={`/produk/${product.id}`}
+                  className="block rounded-lg border border-dashed border-line px-2.5 py-2 text-center text-[11px] font-semibold text-brand-700 transition hover:bg-brand-50"
+                >
+                  +{hiddenSizes} ukuran lainnya
+                </Link>
+              </li>
+            ) : null}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between border-t border-line/70 px-4 py-3 sm:px-5">
         <Link
           href={`/produk/${product.id}`}
-          className="text-[11px] font-bold text-brand-700 hover:text-brand-800"
+          className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-700 hover:text-brand-800"
         >
           Kelola harga
+          <ChevronRight className="h-3.5 w-3.5" />
         </Link>
         <ConfirmForm
           action={toggleProductAction}
@@ -238,7 +296,7 @@ function ProductCard({ product }: { product: ProductListItem }) {
             aria-label={
               product.isActive ? "Nonaktifkan produk" : "Aktifkan produk"
             }
-            className="grid h-8 w-8 place-items-center rounded-lg text-muted transition hover:bg-cream hover:text-ink"
+            className="grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-cream hover:text-ink"
           >
             {product.isActive ? (
               <Archive className="h-4 w-4" />

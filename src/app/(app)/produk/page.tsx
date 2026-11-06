@@ -74,7 +74,6 @@ export default async function ProductsPage({
             id: size.id,
             label: size.label,
             costPrice: size.costPrice,
-            sellingPrice: size.sellingPrice,
           })),
         }))}
       />

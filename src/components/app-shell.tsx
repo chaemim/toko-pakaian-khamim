@@ -32,12 +32,20 @@ const mainNav = [
 const mobileNav = [
   { href: "/dashboard", label: "Beranda", icon: LayoutDashboard },
   { href: "/produk", label: "Produk", icon: Shirt },
-  { href: "/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/penjualan", label: "Penjualan", icon: ReceiptText },
   { href: "/pengaturan", label: "Akun", icon: UserRound },
 ];
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+// Halaman "catat penjualan baru" ditandai oleh tombol Jual, bukan menu Penjualan.
+function isMobileActive(pathname: string, href: string) {
+  if (href === "/penjualan" && isActive(pathname, "/penjualan/baru")) {
+    return false;
+  }
+  return isActive(pathname, href);
 }
 
 export function AppShell({
@@ -153,7 +161,7 @@ export function AppShell({
             <MobileNavItem
               key={item.href}
               item={item}
-              active={isActive(pathname, item.href)}
+              active={isMobileActive(pathname, item.href)}
             />
           ))}
 
@@ -162,12 +170,12 @@ export function AppShell({
               href="/penjualan/baru"
               className="group -mt-5 flex flex-col items-center gap-1"
               aria-label="Catat penjualan baru"
-              aria-current={isActive(pathname, "/penjualan") ? "page" : undefined}
+              aria-current={isActive(pathname, "/penjualan/baru") ? "page" : undefined}
             >
               <span
                 className={clsx(
                   "grid h-[52px] w-[52px] place-items-center rounded-full text-paper shadow-[0_14px_30px_-12px_rgba(18,55,39,0.9)] ring-4 transition group-active:scale-95",
-                  isActive(pathname, "/penjualan")
+                  isActive(pathname, "/penjualan/baru")
                     ? "bg-brand-900 ring-gold-300"
                     : "bg-brand-700 ring-cream",
                 )}
@@ -177,7 +185,7 @@ export function AppShell({
               <span
                 className={clsx(
                   "text-[11px] leading-none text-brand-800",
-                  isActive(pathname, "/penjualan") ? "font-extrabold" : "font-bold",
+                  isActive(pathname, "/penjualan/baru") ? "font-extrabold" : "font-bold",
                 )}
               >
                 Jual
@@ -189,7 +197,7 @@ export function AppShell({
             <MobileNavItem
               key={item.href}
               item={item}
-              active={isActive(pathname, item.href)}
+              active={isMobileActive(pathname, item.href)}
             />
           ))}
         </div>
