@@ -446,7 +446,7 @@ export async function getReportData(from: string, to: string) {
       .select({
         category: sql<string>`coalesce(${products.category}, 'Tanpa kategori')`,
         qty: sql<number>`coalesce(sum(${saleItems.qty}), 0)`,
-        revenue: sql<number>`coalesce(round(sumcoalesce(${saleItems.subtotal}::numeric * (${sales.subtotal} - ${sales.discount}) / nullif(${sales.subtotal}, 0), 0)), 0)`,
+        revenue: sql<number>`coalesce(round(sum(coalesce(${saleItems.subtotal}::numeric * (${sales.subtotal} - ${sales.discount}) / nullif(${sales.subtotal}, 0), 0))), 0)`,
         profit: sql<number>`coalesce(round(sum(coalesce(${saleItems.subtotal}::numeric * (${sales.subtotal} - ${sales.discount}) / nullif(${sales.subtotal}, 0), 0) - ${saleItems.costPrice} * ${saleItems.qty})), 0)`,
       })
       .from(saleItems)
@@ -456,7 +456,7 @@ export async function getReportData(from: string, to: string) {
       .groupBy(sql`coalesce(${products.category}, 'Tanpa kategori')`)
       .orderBy(
         desc(
-          sql`coalesce(round(sumcoalesce(${saleItems.subtotal}::numeric * (${sales.subtotal} - ${sales.discount}) / nullif(${sales.subtotal}, 0), 0)), 0)`,
+          sql`coalesce(round(sum(coalesce(${saleItems.subtotal}::numeric * (${sales.subtotal} - ${sales.discount}) / nullif(${sales.subtotal}, 0), 0))), 0)`,
         ),
       ),
     db
