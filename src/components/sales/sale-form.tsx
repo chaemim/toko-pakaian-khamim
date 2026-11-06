@@ -72,7 +72,7 @@ const paymentOptions = [
   { value: "qris", label: "QRIS", icon: QrCode },
 ];
 
-const PRODUCTS_PER_PAGE = 6;
+const PRODUCTS_PER_PAGE = 8;
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "").slice(0, 12);
@@ -424,7 +424,7 @@ export function SaleForm({
               Kelola produk
             </Link>
           </div>
-          <div className="hide-scrollbar flex gap-1.5 overflow-x-auto border-t border-line/70 bg-cream/25 px-3 py-2.5">
+          <div className="hide-scrollbar flex gap-1.5 overflow-x-auto border-y border-line/70 bg-cream/25 px-3 py-2.5">
             {categories.map((item) => (
               <button
                 key={item}
@@ -441,181 +441,182 @@ export function SaleForm({
               </button>
             ))}
           </div>
-        </Card>
 
-        {filteredProducts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-5 py-10 text-center">
-            <p className="text-sm font-semibold text-ink">
-              Produk tidak ditemukan
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              Coba kata kunci lain atau ganti kategori.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                setCategory("Semua");
-              }}
-              className={buttonClasses({
-                variant: "secondary",
-                size: "sm",
-                className: "mt-4",
-              })}
-            >
-              Reset filter
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid gap-2.5 sm:grid-cols-2">
-            {visibleProducts.map((product) => {
-              const selectedQty = product.sizes.reduce(
-                (sum, size) => sum + (qtyBySize.get(size.id) ?? 0),
-                0,
-              );
-              return (
-                <div
-                  key={product.id}
-                  className={clsx(
-                    "rounded-xl border bg-paper p-3.5 shadow-card transition",
-                    selectedQty > 0
-                      ? "border-brand-300 ring-1 ring-brand-100"
-                      : "border-line hover:border-brand-200",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="line-clamp-2 text-[13px] font-bold leading-tight text-ink">
-                        {product.name}
-                      </h3>
-                      <p className="mt-0.5 text-[10px] text-muted">
-                        {product.category || "Tanpa kategori"}
-                      </p>
-                    </div>
-                    <span
+          {filteredProducts.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-sm font-semibold text-ink">
+                Produk tidak ditemukan
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                Coba kata kunci lain atau ganti kategori.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setCategory("Semua");
+                }}
+                className={buttonClasses({
+                  variant: "secondary",
+                  size: "sm",
+                  className: "mt-4",
+                })}
+              >
+                Reset filter
+              </button>
+            </div>
+          ) : (
+            <>
+              <ul className="divide-y divide-line/70">
+                {visibleProducts.map((product) => {
+                  const selectedQty = product.sizes.reduce(
+                    (sum, size) => sum + (qtyBySize.get(size.id) ?? 0),
+                    0,
+                  );
+                  return (
+                    <li
+                      key={product.id}
                       className={clsx(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold",
-                        selectedQty > 0
-                          ? "bg-brand-50 text-brand-700"
-                          : "bg-cream text-muted",
+                        "px-4 py-3.5 transition-colors",
+                        selectedQty > 0 &&
+                          "bg-brand-50/50 shadow-[inset_3px_0_0_var(--color-brand-500)]",
                       )}
                     >
-                      {selectedQty > 0
-                        ? `${selectedQty} dipilih`
-                        : `${product.sizes.length} ukuran`}
-                    </span>
-                  </div>
-                  <div className="mt-2.5 grid grid-cols-2 gap-1.5">
-                    {product.sizes.map((size) => {
-                      const qty = qtyBySize.get(size.id) ?? 0;
-
-                      if (qty > 0) {
-                        return (
-                          <div
-                            key={size.id}
-                            className="col-span-2 flex min-h-11 items-center justify-between gap-2 rounded-xl border border-brand-300 bg-brand-50 px-2.5 py-1.5"
-                          >
-                            <div className="min-w-0">
-                              <span className="block truncate text-[11px] font-bold leading-none text-brand-900">
-                                {size.label}
-                              </span>
-                              <span className="mt-1 block text-[9px] leading-none text-brand-600">
-                                {formatRupiah(size.sellingPrice)}
-                              </span>
-                            </div>
-                            <div className="flex shrink-0 items-center rounded-lg border border-brand-200 bg-paper">
-                              <button
-                                type="button"
-                                onClick={() => changeQty(size.id, -1)}
-                                disabled={qty <= 1}
-                                className="grid h-8 w-8 place-items-center text-brand-700 transition hover:bg-brand-50 disabled:opacity-30"
-                                aria-label={`Kurangi ${product.name} ${size.label}`}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </button>
-                              <span className="min-w-4 text-center text-[11px] font-bold tabular-nums text-brand-900">
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => changeQty(size.id, 1)}
-                                className="grid h-8 w-8 place-items-center text-brand-700 transition hover:bg-brand-50"
-                                aria-label={`Tambah ${product.name} ${size.label}`}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <button
-                          key={size.id}
-                          type="button"
-                          onClick={() => addItem(product, size)}
-                          className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-line bg-cream/40 px-2.5 py-1.5 text-left transition hover:border-brand-300 hover:bg-brand-50 active:scale-[0.98]"
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink">
+                            {product.name}
+                          </h3>
+                          <p className="mt-0.5 text-[11px] text-muted">
+                            {product.category || "Tanpa kategori"}
+                          </p>
+                        </div>
+                        <span
+                          className={clsx(
+                            "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold",
+                            selectedQty > 0
+                              ? "bg-brand-700 text-paper"
+                              : "bg-cream text-muted",
+                          )}
                         >
-                          <span className="min-w-0">
-                            <span className="block truncate text-[11px] font-bold leading-none text-ink">
-                              {size.label}
-                            </span>
-                            <span className="mt-1 block text-[9px] leading-none text-muted">
-                              {formatRupiah(size.sellingPrice)}
-                            </span>
-                          </span>
-                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-700 text-paper">
-                            <Plus className="h-3 w-3" />
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                          {selectedQty > 0
+                            ? `${selectedQty} dipilih`
+                            : `${product.sizes.length} ukuran`}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 grid grid-flow-dense grid-cols-2 gap-2 sm:grid-cols-3">
+                        {product.sizes.map((size) => {
+                          const qty = qtyBySize.get(size.id) ?? 0;
+
+                          if (qty > 0) {
+                            return (
+                              <div
+                                key={size.id}
+                                className="col-span-2 flex min-h-12 items-center justify-between gap-2 rounded-xl border border-brand-400 bg-brand-50 px-3 py-1.5"
+                              >
+                                <div className="min-w-0">
+                                  <span className="block truncate text-[13px] font-bold leading-none text-brand-900">
+                                    {size.label}
+                                  </span>
+                                  <span className="mt-1.5 block text-[11px] leading-none text-brand-700">
+                                    {formatRupiah(size.sellingPrice)}
+                                  </span>
+                                </div>
+                                <div className="flex shrink-0 items-center rounded-lg border border-brand-200 bg-paper">
+                                  <button
+                                    type="button"
+                                    onClick={() => changeQty(size.id, -1)}
+                                    disabled={qty <= 1}
+                                    className="grid h-9 w-9 place-items-center text-brand-700 transition hover:bg-brand-50 disabled:opacity-30"
+                                    aria-label={`Kurangi ${product.name} ${size.label}`}
+                                  >
+                                    <Minus className="h-3.5 w-3.5" />
+                                  </button>
+                                  <span className="min-w-6 text-center text-xs font-bold tabular-nums text-brand-900">
+                                    {qty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => changeQty(size.id, 1)}
+                                    className="grid h-9 w-9 place-items-center text-brand-700 transition hover:bg-brand-50"
+                                    aria-label={`Tambah ${product.name} ${size.label}`}
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={size.id}
+                              type="button"
+                              onClick={() => addItem(product, size)}
+                              className="flex min-h-12 items-center justify-between gap-2 rounded-xl border border-line bg-paper px-3 py-1.5 text-left transition hover:border-brand-300 hover:bg-brand-50 active:scale-[0.98]"
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate text-[13px] font-bold leading-none text-ink">
+                                  {size.label}
+                                </span>
+                                <span className="mt-1.5 block text-[11px] leading-none text-muted">
+                                  {formatRupiah(size.sellingPrice)}
+                                </span>
+                              </span>
+                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-700 text-paper">
+                                <Plus className="h-3.5 w-3.5" />
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {filteredProducts.length > PRODUCTS_PER_PAGE ? (
+                <div className="flex flex-col items-center gap-2 border-t border-line/70 bg-cream/25 px-3 py-3">
+                  <p className="text-[11px] text-muted">
+                    Menampilkan {visibleProducts.length} dari{" "}
+                    {filteredProducts.length} produk
+                  </p>
+                  {hasMoreProducts ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleCount((count) => count + PRODUCTS_PER_PAGE)
+                      }
+                      className={buttonClasses({
+                        variant: "secondary",
+                        size: "sm",
+                        className: "w-full sm:w-auto",
+                      })}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      Muat {Math.min(PRODUCTS_PER_PAGE, remainingProducts)}{" "}
+                      produk lagi
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount(PRODUCTS_PER_PAGE)}
+                      className={buttonClasses({
+                        variant: "secondary",
+                        size: "sm",
+                        className: "w-full sm:w-auto",
+                      })}
+                    >
+                      <ChevronDown className="h-4 w-4 rotate-180" />
+                      Ringkas daftar
+                    </button>
+                  )}
                 </div>
-              );
-            })}
-            </div>
-            {filteredProducts.length > PRODUCTS_PER_PAGE ? (
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-[10px] text-muted">
-                  Menampilkan {visibleProducts.length} dari{" "}
-                  {filteredProducts.length} produk
-                </p>
-                {hasMoreProducts ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVisibleCount((count) => count + PRODUCTS_PER_PAGE)
-                    }
-                    className={buttonClasses({
-                      variant: "secondary",
-                      size: "sm",
-                      className: "w-full sm:w-auto",
-                    })}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                    Muat {Math.min(PRODUCTS_PER_PAGE, remainingProducts)} produk
-                    lagi
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setVisibleCount(PRODUCTS_PER_PAGE)}
-                    className={buttonClasses({
-                      variant: "secondary",
-                      size: "sm",
-                      className: "w-full sm:w-auto",
-                    })}
-                  >
-                    <ChevronDown className="h-4 w-4 rotate-180" />
-                    Ringkas daftar
-                  </button>
-                )}
-              </div>
-            ) : null}
-          </div>
-        )}
+              ) : null}
+            </>
+          )}
+        </Card>
       </div>
 
       <div className="space-y-4 lg:sticky lg:top-6">
